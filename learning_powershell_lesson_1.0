@@ -1,0 +1,80 @@
+#print a message from Hacker Mouse with yellow text (like cheese)
+write-host "Hello from hacker mouse!" -ForegroundColor Yellow
+#Let's create a new file
+#bur first hackermouse must check if a file already exists
+$MouseFile = "hackermouse.txt"
+if (Test-Path $MouseFile -PathType leaf) 
+{write-host "I found some cheese (the file exists already)"}
+else
+{write-host "I can't find cheese here (the file doesn't exist)"}
+new-item .\hackermouse.txt
+#Now let's add a line of text to it
+Set-Content .\hackermouse.txt 'Welcome from HackerMouse'
+#read the file and output it's contents
+get-content .\hackermouse.txt
+#now lets' add another line
+Add-Content .\hackermouse.txt -Value 'Hackermouse loves cheese!'
+#now lets read the file again
+get-content .\hackermouse.txt
+
+#now let's hunt for the cheese STRING (the word 'cheese')
+Select-String -Path hackermouse.txt -pattern 'cheese'
+#this will return "hackermouse.txt:2:Hackermouse loves cheese!" which is the filename, line number and the contents of the line
+#we can do this another way using this command, this command will search all files in the current directory path for any files named hackermouse.txt with the string 'cheese'
+Get-ChildItem -Path .\ -Include hackermouse.txt -Recurse | Select-String -Pattern 'cheese'
+
+#now let's look how we could hunt for cheese in the CTF
+new-item .\hackermouse-flag1.txt
+#Now let's add a line of text to it with a flag in it!
+Set-Content .\hackermouse-flag1.txt 'This is a flag! cheese{f03a8dae-acd9-471e-b69c-5b9b528e33ce}'
+#read the file and output it's contents
+get-content .\hackermouse-flag1.txt
+#to hunt for complex patterns we need to use REGULAR EXPRESSIONS (REGEX)
+#now this looks super complex but when we break it down it becomes clearer
+#we are hunting for a pattern that starts with 'cheese' then starts with { (we use \ as an escape character) then we want to find 8 letters or numbers followed by a - and then more of the same with different patterns!
+$regex = "cheese(\{){0,1}[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}(\}){0,1}"
+select-string -Path .\hackermouse-flag1.txt -Pattern $regex -AllMatches | % { $_.Matches } | % { $_.Value }
+#awesome we can hunt for cheese strings ;) (get it!)
+
+#now let's try and find the flag on the HackerMouse website!
+#Hackermouse is going to use Invoke-WebRequest with the URI paramater and then provide it the SITE: https://myhackermouse.com/
+Invoke-WebRequest -URI https://myhackermouse.com/
+#now this will sent an HTTP request to the site and place all that data into an object, so this time let's put that into a variable
+$MouseScraper = Invoke-WebRequest -URI https://myhackermouse.com/
+#now let's list all the properties and methods
+$MouseScraper | GM
+#now we'll output the RAW response content (this includes the HTTP response header!)
+$MouseScraper.RawContent
+#now we want to see if we can find any cheese strings :D
+#this is re-declaring the same variable as we used before but i'm doing this for demo purposes
+$regex = "cheese(\{){0,1}[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}(\}){0,1}"
+#creates a varialbe 'cheesehunter' by outputing the contents of the MouseScrapper.Rawncontent property and PIPE that into the next command (the search command)
+$cheesehunter = $MouseScraper.RawContent | select-string -Pattern $regex -AllMatches | % { $_.Matches } | % { $_.Value }
+write-host $cheesehunter -ForegroundColor Yellow
+
+#remove the file
+Remove-Item .\hackermouse.txt
+
+#get the operating system name from Windows Management Instrumentation
+(Get-CimInstance Win32_OperatingSystem).Name
+(Get-CimInstance Win32_OperatingSystem).version
+#hackermouse can see this is an object maybe we can get all the properites from Win32_OperatingSystem
+#create a variable walled WMIQuery and put the contents of 'Get-CimInstance Win32_OperatingSystem' into that
+$WMIQuery = Get-CimInstance Win32_OperatingSystem
+#now we want to iterate through each 'object'
+foreach($object in $WMIQuery){
+write-host $object
+#ech object has properties
+write-host $object.Caption
+write-host $object.BuildNumber
+write-host $object.Manufacturer
+write-host $object.WindowsDirectory
+write-host $object.OSArchitecture
+write-host $object.OSLanguage
+}
+#hackermouse want's to know all of the properties and methods this class has! let's do that with get-member
+Get-CimInstance Win32_OperatingSystem | Get-Member
+#some other cool hackermouse things we can do is work with folder
+
+#list directory contents (this is what actually runs when you run the 'dir' command in PowerShell)
+get-childitem
